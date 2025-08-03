@@ -1,0 +1,8 @@
+[package]
+name = "stream-td"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy={version = "0.16.1"}
+bevy-inspector-egui = "0.32.0"
