@@ -2,6 +2,7 @@ mod tower;
 mod world;
 mod projectile;
 mod target;
+mod camera;
 
 use bevy::app::App;
 use bevy::prelude::*;
@@ -9,6 +10,7 @@ use bevy::color::{Color, Srgba};
 use bevy::prelude::{Camera3d, ClearColor, Commands};
 use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use crate::camera::CustomCameraPlugin;
 use crate::projectile::ProjectilePlugin;
 use crate::target::TargetPlugin;
 use crate::tower::TowerPlugin;
@@ -26,13 +28,6 @@ fn main() {
         .add_plugins(WorldPlugin)
         .add_plugins(ProjectilePlugin)
         .add_plugins(TargetPlugin)
-        .add_systems(Startup, spawn_camera)
+        .add_plugins(CustomCameraPlugin)
         .run();
-}
-
-fn spawn_camera(mut commands: Commands){
-    commands.spawn((
-        Camera3d::default(),
-        Transform::from_xyz(-5.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-    )).insert(Name::new("Camera"));
 }

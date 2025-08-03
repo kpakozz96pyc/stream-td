@@ -33,7 +33,16 @@ fn spawn_tower(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut mat
     ))
         .insert(Tower{shooting_timer:Timer::from_seconds(1.0, TimerMode::Repeating),
             projectile_offset: Vec3::new(0.0, 0.0, 0.65) })
-        .insert(Name::new("Tower"));
+        .insert(Name::new("Tower1"));
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+        MeshMaterial3d(materials.add(Color::from(Srgba::new(0.6, 0.3, 0.1, 0.8)))),
+        Transform::from_xyz(3.0, 0.5, 0.0),
+    ))
+        .insert(Tower{shooting_timer:Timer::from_seconds(1.0, TimerMode::Repeating),
+            projectile_offset: Vec3::new(0.0, 0.0, 0.65) })
+        .insert(Name::new("Tower2"));
+    
 }
 
 fn spawn_projectiles(
@@ -60,7 +69,11 @@ fn spawn_projectiles(
                         Mesh3d(meshes.add(Sphere::new(0.1))),
                         MeshMaterial3d(materials.add(Color::from(Srgba::new(1.0, 0.0, 0.0, 1.0)))),
                         Transform::from_translation(tower.projectile_offset).with_scale(Vec3::new(0.5, 0.5, 0.5)),
-                    )).insert(Projectile{speed: 3.0, direction}).insert(Name::new("Projectile"));
+                    )).insert(Projectile{
+                        speed: 3.0,
+                        direction,
+                        life_timer: Timer::from_seconds(2.0, TimerMode::Once)
+                    }).insert(Name::new("Projectile"));
                 });
             }
         }
