@@ -23,7 +23,8 @@ struct Projectile{
 #[derive(Reflect, Component, Default)]
 #[reflect(Component)]
 struct Tower{
-    pub shooting_timer: Timer
+    pub shooting_timer: Timer,
+    pub projectile_offset: Vec3,
 }
 
 fn main() {
@@ -56,7 +57,10 @@ fn spawn_tower(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut mat
         Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
         MeshMaterial3d(materials.add(Color::from(Srgba::new(0.6, 0.3, 0.1, 0.8)))),
         Transform::from_xyz(0.0, 0.5, 0.0),
-    )).insert(Tower{shooting_timer:Timer::from_seconds(1.0, TimerMode::Repeating) }).insert(Name::new("Tower"));
+    ))
+        .insert(Tower{shooting_timer:Timer::from_seconds(1.0, TimerMode::Repeating),
+            projectile_offset: Vec3::new(0.0, 0.0, 0.65) })
+        .insert(Name::new("Tower"));
 }
 
 fn spawn_light(mut commands: Commands){
@@ -97,10 +101,10 @@ fn spawn_projectiles(
     time: Res<Time>,
 ){
 
-    for (mut transform, mut tower, tower_entity) in towers.iter_mut(){
+    for (transform, mut tower, tower_entity) in towers.iter_mut(){
         tower.shooting_timer.tick(time.delta());
         if tower.shooting_timer.just_finished(){
-            let bullet_spawn_position = transform.translation() + Vec3::new(0.0, 0.5, 0.0);
+            let bullet_spawn_position = transform.translation() + tower.projectile_offset;
 
             let direction = targets.iter().min_by_key(|tt|{
                 FloatOrd(Vec3::distance(tt.translation(), bullet_spawn_position))
@@ -111,8 +115,8 @@ fn spawn_projectiles(
                     commands.spawn((
                         Mesh3d(meshes.add(Sphere::new(0.1))),
                         MeshMaterial3d(materials.add(Color::from(Srgba::new(1.0, 0.0, 0.0, 1.0)))),
-                        Transform::from_translation(bullet_spawn_position),
-                    )).insert(Projectile{speed: 1.0, direction}).insert(Name::new("Projectile"));
+                        Transform::from_translation(tower.projectile_offset).with_scale(Vec3::new(1.0, 1.0, 1.0)),
+                    )).insert(Projectile{speed: 5.0, direction}).insert(Name::new("Projectile"));
                 });
             }
         }
