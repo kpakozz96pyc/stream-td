@@ -1,3 +1,4 @@
+use std::ops::Add;
 use bevy::asset::Assets;
 use bevy::color::{Color, Srgba};
 use bevy::math::{FloatOrd, Vec3};
@@ -61,7 +62,11 @@ fn spawn_projectiles(
 
             let direction = targets.iter().min_by_key(|tt|{
                 FloatOrd(Vec3::distance(tt.translation(), bullet_spawn_position))
-            }).map(|ct|{ct.translation() - bullet_spawn_position});
+            }).map(|ct|{
+                let mut target_pos = ct.translation();
+                target_pos.y += 0.25;
+                target_pos - bullet_spawn_position
+            });
 
             if let Some(direction) = direction{
                 commands.entity(tower_entity).with_children(|commands|{

@@ -29,18 +29,31 @@ fn projectile_fly(mut projectiles: Query<(&mut Transform, &Projectile)>, time: R
 
 fn projectile_collision(
     mut commands: Commands,
-    projectiles: Query<(Entity,&mut GlobalTransform), With<Projectile>>,
-    mut targets: Query<(Entity,&mut Target, &mut Transform), With<Target>>,
+    mut param_set: ParamSet<(
+        Query<(Entity, &GlobalTransform), With<Projectile>>,
+        Query<(Entity, &mut Target, &GlobalTransform), With<Target>>
+    )>,
 ){
-    for (projectile, projectile_transform) in projectiles{
-        for (te ,mut target, target_transform) in &mut targets{
-            if Vec3::distance(projectile_transform.translation(), target_transform.translation) < 0.2{
+    let projectiles: Vec<(Entity, Vec3)> = param_set.p0().iter()
+        .map(|(entity, transform)| (entity, transform.translation()))
+        .collect();
+    
+    for (projectile, projectile_pos) in projectiles {
+        let mut despawn_projectile = false;
+        
+        for (te, mut target, target_transform) in &mut param_set.p1() {
+            let target_pos = target_transform.translation();
+            if Vec3::distance(projectile_pos, target_pos) < 0.5 {
                 target.health -= 15.0;
-                commands.entity(projectile).despawn();
+                despawn_projectile = true;
                 if target.health <= 0.0 {
-                    commands.entity(te).despawn()
+                    commands.entity(te).despawn();
                 }
             }
+        }
+        
+        if despawn_projectile {
+            commands.entity(projectile).despawn();
         }
     }
     return;
