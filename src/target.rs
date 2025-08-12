@@ -3,6 +3,7 @@ use bevy::color::{ Srgba};
 use bevy::pbr::{ StandardMaterial};
 use bevy::prelude::*;
 use bevy::scene::SceneInstanceReady;
+use rand::Rng;
 use crate::world::Game;
 
 const GLTF_PATH: &str = "glb/enemy_01.glb";
@@ -12,7 +13,9 @@ pub struct TargetPlugin;
 impl Plugin for TargetPlugin{
     fn build(&self,app: &mut App){
         app.register_type::<Target>()
-            .add_systems(Update, (spawn_targets, move_targets));
+            .insert_resource(TargetAssets::default())
+            .add_systems(Startup, load_target_assets)
+            .add_systems(Update, (spawn_targets, move_targets, despawn_targets));
 
         return;
     }
@@ -26,39 +29,44 @@ pub struct Target{
     pub health: f32,
 }
 
-#[derive(Component)]
-pub struct TargetAnimation{
-    graph_handle: Handle<AnimationGraph>,
-    index: AnimationNodeIndex
+#[derive(Resource, Default)]
+pub struct TargetAssets {
+    scene: Handle<Scene>,
+    animation_graph: Handle<AnimationGraph>,
+    animation_index: AnimationNodeIndex,
+}
+
+fn load_target_assets(
+    asset_server: Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
+    mut target_assets: ResMut<TargetAssets>,
+) {
+    let (graph, index) = AnimationGraph::from_clip(
+        asset_server.load(GltfAssetLabel::Animation(0).from_asset(GLTF_PATH)),
+    );
+    let graph_handle = graphs.add(graph);
+
+    target_assets.scene = asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLTF_PATH));
+    target_assets.animation_graph = graph_handle;
+    target_assets.animation_index = index;
 }
 
 fn spawn_targets(
-    mut commands: Commands, 
-/*    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,*/
+    mut commands: Commands,
     mut game: Query<&mut Game>, 
     time: Res<Time>,
-    asset_server: Res<AssetServer>,
-    mut graphs: ResMut<Assets<AnimationGraph>>){
+    target_assets: Res<TargetAssets>,
+){
 
     let mut game = game.single_mut().unwrap();
     game.target_spawn_timer.tick(time.delta());
     if game.target_spawn_timer.just_finished(){
 
-        let (graph, index) = AnimationGraph::from_clip(
-            asset_server.load(GltfAssetLabel::Animation(0).from_asset(GLTF_PATH)),
-        );
 
-        let graph_handle = graphs.add(graph);
-
-        let animation_to_play = TargetAnimation {
-            graph_handle,
-            index,
-        };
-
-        let mesh_scene = SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLTF_PATH)));
         commands
-            .spawn((animation_to_play, mesh_scene, Transform::from_xyz(-2.0, 0.0, 2.0).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(0.15))))
+            .spawn((
+                    SceneRoot(target_assets.scene.clone()),
+                    Transform::from_xyz(-2.0, 0.0, 2.0).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(0.15))))
             .insert(Target{speed: 0.3, health: 100.0}).insert(Name::new("Target"))
             .observe(play_animation_when_ready);
     }
@@ -68,26 +76,36 @@ fn play_animation_when_ready(
     trigger: Trigger<SceneInstanceReady>,
     mut commands: Commands,
     children: Query<&Children>,
-    animations_to_play: Query<&TargetAnimation>,
+    target_assets: Res<TargetAssets>,
     mut players: Query<&mut AnimationPlayer>,
 ) {
 
-    if let Ok(animation_to_play) = animations_to_play.get(trigger.target()) {
+
         for child in children.iter_descendants(trigger.target()) {
             if let Ok(mut player) = players.get_mut(child) {
+                let mut rng = rand::thread_rng();
+                let speed = rng.gen_range(0.5..1.5);
 
-                player.play(animation_to_play.index).repeat();
+                player.play(target_assets.animation_index).repeat().set_seek_time(speed);
                 commands
                     .entity(child)
-                    .insert(AnimationGraphHandle(animation_to_play.graph_handle.clone()));
+                    .insert(AnimationGraphHandle(target_assets.animation_graph.clone()));
             }
         }
-    }
+
 }
 
 fn move_targets(mut targets: Query<(&mut Transform, &Target)>, time: Res<Time>){
     for (mut transform, target) in targets.iter_mut(){
         transform.translation.x += target.speed*time.delta_secs();
+    }
+}
+
+fn despawn_targets(mut commands: Commands, mut targets: Query<(&Transform, Entity)>, time: Res<Time>){
+    for (transform, entity) in targets.iter_mut(){
+        if transform.translation.x > 30.0{
+            commands.entity(entity).despawn();
+        }
     }
 }
 

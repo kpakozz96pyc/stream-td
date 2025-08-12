@@ -7,7 +7,7 @@ pub struct CustomCameraPlugin;
 
 impl bevy::prelude::Plugin for CustomCameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_camera)
+        app.add_systems(Startup, (spawn_camera))
             .add_systems(Update, (camera_controls, camera_zoom, camera_rotate));
     }
 }
@@ -95,7 +95,7 @@ fn camera_rotate(
             let mouse_delta = event.delta;
             let y_rotation = Quat::from_rotation_y(-mouse_delta.x * rotation_speed);
             camera_transform.rotate(y_rotation);
-            let right_dir = Vec3::new(camera_transform.right().x, camera_transform.right().y, camera_transform.right().z);
+            let right_dir = Vec3::new(camera_transform.right().x, camera_transform.right().y, camera_transform.right().z).normalize();
             let x_rotation = Quat::from_axis_angle(right_dir, -mouse_delta.y * rotation_speed);
             camera_transform.rotate(x_rotation);
         }

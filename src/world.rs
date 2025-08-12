@@ -40,3 +40,4 @@ fn spawn_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut mat
         .insert(Name::new("Scene"))
         .insert(Game {target_spawn_timer: Timer::from_seconds(3.0, TimerMode::Repeating)});
 }
+
