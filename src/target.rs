@@ -1,6 +1,4 @@
 use bevy::asset::Assets;
-use bevy::color::{ Srgba};
-use bevy::pbr::{ StandardMaterial};
 use bevy::prelude::*;
 use bevy::scene::SceneInstanceReady;
 use rand::Rng;
@@ -83,8 +81,8 @@ fn play_animation_when_ready(
 
         for child in children.iter_descendants(trigger.target()) {
             if let Ok(mut player) = players.get_mut(child) {
-                let mut rng = rand::thread_rng();
-                let speed = rng.gen_range(0.5..1.5);
+                let mut rng = rand::rng();
+                let speed = rng.random_range(0.5..1.5);
 
                 player.play(target_assets.animation_index).repeat().set_seek_time(speed);
                 commands
@@ -101,7 +99,7 @@ fn move_targets(mut targets: Query<(&mut Transform, &Target)>, time: Res<Time>){
     }
 }
 
-fn despawn_targets(mut commands: Commands, mut targets: Query<(&Transform, Entity)>, time: Res<Time>){
+fn despawn_targets(mut commands: Commands, mut targets: Query<(&Transform, Entity)>){
     for (transform, entity) in targets.iter_mut(){
         if transform.translation.x > 30.0{
             commands.entity(entity).despawn();

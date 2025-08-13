@@ -10,7 +10,7 @@ const GLTF_PATH: &str = "glb/tower_01.glb";
 impl Plugin for TowerPlugin{
     fn build(&self,app: &mut App){
         app.register_type::<Tower>().insert_resource(TowerAssets::default())
-            .add_systems(Startup, (spawn_tower))
+            .add_systems(Startup, spawn_tower)
             .add_systems(Update, spawn_projectiles);
         
         return;
