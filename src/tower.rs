@@ -3,7 +3,7 @@ use bevy::color::{Color, Srgba};
 use bevy::math::{FloatOrd, Vec3};
 use bevy::pbr::{MeshMaterial3d, StandardMaterial};
 use bevy::prelude::*;
-use crate::projectile::Projectile;
+use crate::projectile::{Projectile, ProjectileAssets};
 use crate::target::Target;
 
 pub struct TowerPlugin;
@@ -11,6 +11,7 @@ pub struct TowerPlugin;
 impl Plugin for TowerPlugin{
     fn build(&self,app: &mut App){
         app.register_type::<Tower>()
+            .insert_resource(TowerAssets::default())
             .add_systems(Startup, spawn_tower)
             .add_systems(Update, spawn_projectiles);
         
@@ -25,33 +26,35 @@ pub struct Tower{
     pub projectile_offset: Vec3,
 }
 
-fn spawn_tower(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>){
+fn spawn_tower(mut commands: Commands,
+               mut tower_assets: ResMut<TowerAssets>,
+               asset_server: Res<AssetServer>,
+){
+    tower_assets.scene_1 = asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLF_TOWER_1));
+    tower_assets.scene_2 = asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLF_TOWER_2));
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-        MeshMaterial3d(materials.add(Color::from(Srgba::new(0.6, 0.3, 0.1, 0.8)))),
-        Transform::from_xyz(0.0, 0.5, 0.0),
+        SceneRoot(tower_assets.scene_1.clone()),
+        Transform::from_xyz(0.0, 0.0, 0.0),
     ))
         .insert(Tower{shooting_timer:Timer::from_seconds(1.0, TimerMode::Repeating),
-            projectile_offset: Vec3::new(0.0, 0.0, 0.65) })
-        .insert(Name::new("Tower1"));
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-        MeshMaterial3d(materials.add(Color::from(Srgba::new(0.6, 0.3, 0.1, 0.8)))),
-        Transform::from_xyz(3.0, 0.5, 0.0),
-    ))
-        .insert(Tower{shooting_timer:Timer::from_seconds(1.0, TimerMode::Repeating),
-            projectile_offset: Vec3::new(0.0, 0.0, 0.65) })
-        .insert(Name::new("Tower2"));
+            projectile_offset: Vec3::new(0.0, 1.0, 0.2) })
+        .insert(Name::new("Tower0"));
     
+    commands.spawn((
+        SceneRoot(tower_assets.scene_2.clone()),
+        Transform::from_xyz(3.0, 0.0, 0.0),
+    ))
+        .insert(Tower{shooting_timer:Timer::from_seconds(1.0, TimerMode::Repeating),
+            projectile_offset: Vec3::new(0.0, 0.8, 0.2) })
+        .insert(Name::new("Tower2"));
 }
 
 fn spawn_projectiles(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut towers: Query<(&GlobalTransform, &mut Tower, Entity)>,
     targets: Query<&GlobalTransform, With<Target>>,
     time: Res<Time>,
+    projectile_assets: ResMut<ProjectileAssets>,
 ){
 
     for (transform, mut tower, tower_entity) in towers.iter_mut(){
@@ -61,21 +64,46 @@ fn spawn_projectiles(
 
             let direction = targets.iter().min_by_key(|tt|{
                 FloatOrd(Vec3::distance(tt.translation(), bullet_spawn_position))
-            }).map(|ct|{ct.translation() - bullet_spawn_position});
+            }).map(|ct|{
+                let mut target_position = ct.translation();
+                target_position.y += 0.3;
+                return target_position - bullet_spawn_position
+            });
 
             if let Some(direction) = direction{
+
+                let tower_forward = transform.rotation() * -Vec3::Z;
+                // Ensure vectors are properly normalized by normalizing twice
+                let normalized_tower_forward = tower_forward.normalize().normalize();
+                let normalized_direction = direction.normalize().normalize();
+                let rotation_to_target = Quat::from_rotation_arc(normalized_tower_forward, normalized_direction);
+                let rotation = rotation_to_target * transform.rotation();
+                
+                
                 commands.entity(tower_entity).with_children(|commands|{
                     commands.spawn((
-                        Mesh3d(meshes.add(Sphere::new(0.1))),
-                        MeshMaterial3d(materials.add(Color::from(Srgba::new(1.0, 0.0, 0.0, 1.0)))),
-                        Transform::from_translation(tower.projectile_offset).with_scale(Vec3::new(0.5, 0.5, 0.5)),
+                        SceneRoot(projectile_assets.scene.clone()),
+                        Transform::from_translation(tower.projectile_offset).with_rotation(rotation),
                     )).insert(Projectile{
-                        speed: 3.0,
+                        speed: 2.0,
                         direction,
                         life_timer: Timer::from_seconds(2.0, TimerMode::Once)
-                    }).insert(Name::new("Projectile"));
+                    }).insert(Name::new("Projectile"));                    
                 });
+
+
+
+                
             }
         }
     }
+}
+
+const GLF_TOWER_1: &str = "glb/tower_01.glb";
+const GLF_TOWER_2: &str = "glb/tower_02.glb";
+
+#[derive(Default, Resource)]
+struct TowerAssets{
+    scene_1: Handle<Scene>,
+    scene_2: Handle<Scene>,
 }

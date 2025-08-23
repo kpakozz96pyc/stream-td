@@ -3,6 +3,8 @@ mod world;
 mod projectile;
 mod target;
 mod camera;
+mod pixel_plugin;
+mod blood;
 
 use bevy::app::App;
 use bevy::prelude::*;
@@ -16,7 +18,8 @@ use crate::target::TargetPlugin;
 use crate::tower::TowerPlugin;
 use crate::world::WorldPlugin;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-
+use crate::blood::BloodPlugin;
+use crate::pixel_plugin::PixelPlugin;
 
 fn main() {
     App::new()
@@ -27,9 +30,11 @@ fn main() {
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(TowerPlugin)
+        .add_plugins(TargetPlugin)
         .add_plugins(WorldPlugin)
         .add_plugins(ProjectilePlugin)
-        .add_plugins(TargetPlugin)
         .add_plugins(CustomCameraPlugin)
+        .add_plugins(PixelPlugin)
+        .add_plugins(BloodPlugin)
         .run();
 }
