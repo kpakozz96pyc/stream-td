@@ -3,6 +3,8 @@ mod world;
 mod projectile;
 mod target;
 mod camera;
+mod blood;
+mod pixel_plugin;
 
 use bevy::prelude::*;
 use bevy::color::{Color, Srgba};
@@ -14,6 +16,8 @@ use crate::target::TargetPlugin;
 use crate::tower::TowerPlugin;
 use crate::world::WorldPlugin;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+use crate::blood::BloodPlugin;
+use crate::pixel_plugin::PostProcessPlugin;
 
 fn main() {
     App::new()
@@ -27,6 +31,8 @@ fn main() {
         .add_plugins(WorldPlugin)
         .add_plugins(ProjectilePlugin)
         .add_plugins(TargetPlugin)
-        .add_plugins(CustomCameraPlugin) // добавляем без конфигурации // настраиваем при старте
+        .add_plugins(CustomCameraPlugin)
+        .add_plugins(BloodPlugin)
+        .add_plugins(PostProcessPlugin)// добавляем без конфигурации // настраиваем при старте
         .run();
 }

@@ -83,12 +83,10 @@ fn spawn_projectiles(
 
                 let tower_forward = transform.rotation() * -Vec3::Z;
 
-                // Кватернион, чтобы повернуть forward башни в нужное направление
+                
                 let normalized_tower_forward = tower_forward.normalize();
                 let normalized_direction = direction.normalize();
                 let rotation_to_target = Quat::from_rotation_arc(normalized_tower_forward, normalized_direction);
-
-                // Итоговая ориентация стрелы = поворот башни + корректировка на цель
                 let rotation = rotation_to_target * transform.rotation();
 
                 commands.entity(tower_entity).with_children(|commands|{

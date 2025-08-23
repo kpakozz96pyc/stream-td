@@ -2,6 +2,7 @@ use bevy::app::{App, Startup};
 use bevy::input::mouse::{MouseButton, MouseMotion, MouseWheel};
 use bevy::math::{Quat, Vec3};
 use bevy::prelude::{ButtonInput, Camera3d, Commands, EventReader, KeyCode, Query, Res, Time, Transform, Update, With};
+use crate::pixel_plugin::PostProcessSettings;
 
 pub struct CustomCameraPlugin;
 
@@ -16,6 +17,9 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         Camera3d::default(),
         Transform::from_xyz(-5.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        PostProcessSettings {
+            block_size: 2.5,
+        },
     ));
 }
 

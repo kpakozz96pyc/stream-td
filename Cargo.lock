@@ -4224,6 +4224,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
+ "bytemuck",
  "fs_extra",
  "rand 0.9.2",
 ]

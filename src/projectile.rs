@@ -1,6 +1,7 @@
 use crate::target::Target;
 use bevy::math::Vec3;
 use bevy::prelude::*;
+use crate::blood::SpawnBlood;
 
 const GLTF_PATH: &str = "glb/arrow_2.glb";
 
@@ -45,6 +46,7 @@ fn projectile_collision(
         Query<(Entity, &GlobalTransform), With<Projectile>>,
         Query<(Entity, &mut Target, &GlobalTransform), With<Target>>,
     )>,
+    mut blood_ev: EventWriter<SpawnBlood>,
 ) {
     let projectiles: Vec<(Entity, Vec3)> = param_set
         .p0()
@@ -60,6 +62,9 @@ fn projectile_collision(
             if Vec3::distance(projectile_pos, target_pos) < 0.5 {
                 target.health -= 15.0;
                 despawn_projectile = true;
+
+                blood_ev.write(SpawnBlood { pos: target_pos });
+
                 if target.health <= 0.0 {
                     commands.entity(te).despawn();
                 }
