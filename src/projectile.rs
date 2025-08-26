@@ -1,7 +1,7 @@
 use bevy::math::{ Vec3};
 use bevy::prelude::*;
 use crate::blood::SpawnBlood;
-use crate::target::Target;
+use crate::target::{Health, Target};
 
 pub struct ProjectilePlugin;
 
@@ -34,18 +34,18 @@ fn projectile_fly(mut projectiles: Query<(&mut Transform, &Projectile)>, time: R
 fn projectile_collision(
     mut commands: Commands,
     projectiles: Query<(Entity,&mut GlobalTransform), With<Projectile>>,
-    mut targets: Query<(Entity,&mut Target, &mut Transform), With<Target>>,
+    mut targets: Query<(Entity,&mut Target, &mut Transform, &mut Health), With<Target>>,
     mut blood_ev: EventWriter<SpawnBlood>,
     mut death_ev: EventWriter<DeathEvent>,
 ){
     for (projectile, projectile_transform) in projectiles{
-        for (te ,mut target, target_transform) in &mut targets{
+        for (te ,mut target, target_transform, mut health) in &mut targets{
             let target_pos = target_transform.translation;
             if Vec3::distance(projectile_transform.translation(), target_pos) < 0.4{
-                target.health -= 15.0;
+                health.0 -= 15.0;
                 commands.entity(projectile).despawn();
 
-                if target.health <= 0.0 {
+                if health.0 <= 0.0 {
                     commands.entity(te).despawn();
 
                     blood_ev.write(SpawnBlood{pos: target_pos});
