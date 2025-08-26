@@ -1,4 +1,4 @@
-use bevy::app::{App, Plugin, Startup, Update};
+use bevy::app::{App, Plugin, Startup};
 use bevy::asset::Assets;
 use bevy::color::{Color, Srgba};
 

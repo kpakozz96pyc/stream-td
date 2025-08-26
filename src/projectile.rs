@@ -34,12 +34,12 @@ fn projectile_fly(mut projectiles: Query<(&mut Transform, &Projectile)>, time: R
 fn projectile_collision(
     mut commands: Commands,
     projectiles: Query<(Entity,&mut GlobalTransform), With<Projectile>>,
-    mut targets: Query<(Entity,&mut Target, &mut Transform, &mut Health), With<Target>>,
+    mut targets: Query<(Entity, &mut Transform, &mut Health), With<Target>>,
     mut blood_ev: EventWriter<SpawnBlood>,
     mut death_ev: EventWriter<DeathEvent>,
 ){
     for (projectile, projectile_transform) in projectiles{
-        for (te ,mut target, target_transform, mut health) in &mut targets{
+        for (te, target_transform, mut health) in &mut targets{
             let target_pos = target_transform.translation;
             if Vec3::distance(projectile_transform.translation(), target_pos) < 0.4{
                 health.0 -= 15.0;

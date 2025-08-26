@@ -1,7 +1,4 @@
-use bevy::asset::Assets;
-use bevy::color::{Color, Srgba};
 use bevy::math::{FloatOrd, Vec3};
-use bevy::pbr::{MeshMaterial3d, StandardMaterial};
 use bevy::prelude::*;
 use crate::projectile::{Projectile, ProjectileAssets};
 use crate::target::Target;
