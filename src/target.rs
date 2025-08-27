@@ -1,7 +1,9 @@
 use bevy::asset::Assets;
 use bevy::prelude::*;
 use bevy::scene::SceneInstanceReady;
+use bevy::tasks::futures_lite::StreamExt;
 use rand::{Rng};
+use crate::AppState;
 use crate::world::Game;
 
 pub struct TargetPlugin;
@@ -16,9 +18,9 @@ impl Plugin for TargetPlugin {
                 Update,
                 (
                     spawn_targets,
-                    move_targets
-                ),
-            );
+                    move_targets,
+                ).run_if(in_state(AppState::InGame)
+            ));
     }
 }
 

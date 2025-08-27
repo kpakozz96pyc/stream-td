@@ -1,7 +1,9 @@
 use bevy::math::{ Vec3};
 use bevy::prelude::*;
+use crate::AppState;
 use crate::blood::SpawnBlood;
 use crate::target::{Health, Target};
+use bevy::audio::{AudioSource, SpatialAudioSink};
 
 pub struct ProjectilePlugin;
 
@@ -11,7 +13,11 @@ impl Plugin for ProjectilePlugin {
             .insert_resource(ProjectileAssets::default())
             .add_event::<DeathEvent>()
             .add_systems(Startup, load_assets)
-            .add_systems(Update, (projectile_fly, projectile_collision, projectile_despawn, play_death_sound));
+            .add_systems(Update, (
+                projectile_fly,
+                projectile_collision,
+                projectile_despawn,
+                play_death_sound).run_if(in_state(AppState::InGame)));
 
         return;
     }
@@ -49,7 +55,7 @@ fn projectile_collision(
                     commands.entity(te).despawn();
 
                     blood_ev.write(SpawnBlood{pos: target_pos});
-                    death_ev.write(DeathEvent{});
+                    death_ev.write(DeathEvent{pos: target_pos});
                 }
             }
         }
@@ -57,7 +63,9 @@ fn projectile_collision(
     return;
 }
 #[derive(Event, Default)]
-struct DeathEvent;
+struct DeathEvent {
+    pub pos: Vec3,
+}
 
 #[derive(Resource, Deref)]
 struct DeathSound(Handle<AudioSource>);
@@ -69,8 +77,16 @@ fn play_death_sound(
     sound: Res<DeathSound>,
 ) {
     if !death_events.is_empty() {
+        for ev in death_events.read() {
+            commands.spawn((
+                Name::new("DeathSound"),
+                Transform::from_translation(ev.pos),
+                GlobalTransform::default(),
+                AudioPlayer(sound.clone()),
+                PlaybackSettings::DESPAWN.with_spatial(true)
+            ));
+        }
         death_events.clear();
-        commands.spawn((AudioPlayer(sound.clone()), PlaybackSettings::DESPAWN));
     }
 }
 

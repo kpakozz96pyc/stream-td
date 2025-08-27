@@ -5,6 +5,7 @@ mod target;
 mod camera;
 mod pixel_plugin;
 mod blood;
+mod main_menu;
 
 use bevy::app::App;
 use bevy::prelude::*;
@@ -19,6 +20,7 @@ use crate::tower::TowerPlugin;
 use crate::world::WorldPlugin;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use crate::blood::BloodPlugin;
+use crate::main_menu::MainMenuPlugin;
 use crate::pixel_plugin::PixelPlugin;
 
 fn main() {
@@ -36,5 +38,17 @@ fn main() {
         .add_plugins(CustomCameraPlugin)
         .add_plugins(PixelPlugin)
         .add_plugins(BloodPlugin)
+        .add_plugins(MainMenuPlugin)
+        .init_state::<AppState>()
         .run();
 }
+
+#[derive(States, Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
+pub enum AppState {
+    #[default]
+    Menu,
+    InGame,
+    Paused,
+}
+
+

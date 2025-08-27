@@ -3,6 +3,7 @@ use bevy::pbr::{NotShadowCaster, MeshMaterial3d};
 use bevy::math::primitives::Rectangle;
 use bevy::color::Srgba;
 use rand::Rng;
+use crate::AppState;
 
 #[derive(Event)]
 pub struct SpawnBlood {
@@ -87,6 +88,6 @@ pub struct BloodPlugin;
 impl Plugin for BloodPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SpawnBlood>()
-            .add_systems(Update, (spawn_blood_splash, fade_and_despawn_splashes));
+            .add_systems(Update, (spawn_blood_splash, fade_and_despawn_splashes).run_if(in_state(AppState::InGame)));
     }
 }

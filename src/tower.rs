@@ -1,5 +1,6 @@
 use bevy::math::{FloatOrd, Vec3};
 use bevy::prelude::*;
+use crate::AppState;
 use crate::projectile::{Projectile, ProjectileAssets};
 use crate::target::Target;
 
@@ -10,7 +11,7 @@ impl Plugin for TowerPlugin{
         app.register_type::<Tower>()
             .insert_resource(TowerAssets::default())
             .add_systems(Startup, spawn_tower)
-            .add_systems(Update, spawn_projectiles);
+            .add_systems(Update, spawn_projectiles.run_if(in_state(AppState::InGame)));
         
         return;
     }
