@@ -44,6 +44,8 @@ fn projectile_collision(
     mut blood_ev: EventWriter<SpawnBlood>,
     mut death_ev: EventWriter<DeathEvent>,
 ){
+    
+    //ToDo: change iteration from proj->target to target->proj
     for (projectile, projectile_transform) in projectiles{
         for (te, target_transform, mut health) in &mut targets{
             let target_pos = target_transform.translation;
