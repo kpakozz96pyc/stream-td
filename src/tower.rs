@@ -81,17 +81,13 @@ fn spawn_projectiles(
                 commands.entity(tower_entity).with_children(|commands|{
                     commands.spawn((
                         SceneRoot(projectile_assets.scene.clone()),
-                        Transform::from_translation(tower.projectile_offset).with_rotation(rotation),
+                        Transform::from_translation(tower.projectile_offset).with_rotation(rotation).with_scale(Vec3::splat(0.5)),
                     )).insert(Projectile{
                         speed: 2.0,
                         direction,
                         life_timer: Timer::from_seconds(2.0, TimerMode::Once)
                     }).insert(Name::new("Projectile"));                    
                 });
-
-
-
-                
             }
         }
     }
