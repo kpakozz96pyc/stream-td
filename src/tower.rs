@@ -1,103 +1,164 @@
 use bevy::math::{FloatOrd, Vec3};
 use bevy::prelude::*;
 use crate::AppState;
-use crate::projectile::{Projectile, ProjectileAssets};
+use crate::projectile::{Projectile};
 use crate::target::Target;
+use std::collections::HashMap;
 
 pub struct TowerPlugin;
 
-impl Plugin for TowerPlugin{
-    fn build(&self,app: &mut App){
-        app.register_type::<Tower>()
-            .insert_resource(TowerAssets::default())
-            .add_systems(Startup, spawn_tower)
-            .add_systems(Update, spawn_projectiles.run_if(in_state(AppState::InGame)));
-        
-        return;
+fn spawn_projectiles(
+    mut commands: Commands,
+    mut towers: Query<(&GlobalTransform, &mut Tower, &TowerStats)>,
+    targets: Query<&GlobalTransform, With<Target>>,
+    time: Res<Time>,
+) {
+    for (gt, mut tower, stats) in &mut towers {
+        tower.shooting_timer.tick(time.delta());
+        if !tower.shooting_timer.just_finished() { continue; }
+
+        let muzzle = gt.translation() + stats.projectile_offset;
+
+        let maybe_dir = targets.iter()
+            .filter_map(|tgt| {
+                let to = tgt.translation() + Vec3::Y * 0.3 - muzzle;
+                let d2 = to.length_squared();
+                if d2 <= stats.range_sq { Some((d2, to)) } else { None }
+            })
+            .min_by_key(|(d2, _)| FloatOrd(*d2))
+            .map(|(_, to)| to);
+
+        if let Some(dir) = maybe_dir {
+            let dir_norm = dir.normalize();
+            let rot = Quat::from_rotation_arc(-Vec3::Z, dir_norm);
+
+            commands.spawn((
+                SceneRoot(stats.projectile_scene.clone()),
+                Transform::from_translation(muzzle)
+                    .with_rotation(rot)
+                    .with_scale(Vec3::splat(stats.projectile_scale)),
+                Projectile {
+                    speed: stats.projectile_speed,
+                    direction: dir_norm,
+                    life_timer: Timer::from_seconds(2.0, TimerMode::Once),
+                    damage: stats.damage,
+                },
+                Name::new("Projectile"),
+            ));
+        }
     }
 }
 
 #[derive(Reflect, Component, Default)]
 #[reflect(Component)]
-pub struct Tower{
+pub struct Tower {
     pub shooting_timer: Timer,
+}
+
+#[derive(Component, Clone)]
+pub struct TowerStats {
+    pub damage: f32,
     pub projectile_offset: Vec3,
+    pub range_sq: f32,
+    pub projectile_speed: f32,
+    pub projectile_scale: f32,
+    pub projectile_scene: Handle<Scene>,
 }
 
-fn spawn_tower(mut commands: Commands,
-               mut tower_assets: ResMut<TowerAssets>,
-               asset_server: Res<AssetServer>,
-){
-    tower_assets.scene_1 = asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLF_TOWER_1));
-    tower_assets.scene_2 = asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLF_TOWER_2));
-    commands.spawn((
-        SceneRoot(tower_assets.scene_1.clone()),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-    ))
-        .insert(Tower{shooting_timer:Timer::from_seconds(1.0, TimerMode::Repeating),
-            projectile_offset: Vec3::new(0.0, 1.0, 0.2) })
-        .insert(Name::new("Tower0"));
-    
-    commands.spawn((
-        SceneRoot(tower_assets.scene_2.clone()),
-        Transform::from_xyz(3.0, 0.0, 0.0),
-    ))
-        .insert(Tower{shooting_timer:Timer::from_seconds(1.0, TimerMode::Repeating),
-            projectile_offset: Vec3::new(0.0, 0.8, 0.2) })
-        .insert(Name::new("Tower2"));
+#[derive(Bundle)]
+pub struct TowerBundle {
+    pub tower: Tower,
+    pub stats: TowerStats,
+    pub scene: SceneRoot,
+    pub transform: Transform,
+    pub name: Name,
 }
 
-fn spawn_projectiles(
-    mut commands: Commands,
-    mut towers: Query<(&GlobalTransform, &mut Tower, Entity)>,
-    targets: Query<&GlobalTransform, With<Target>>,
-    time: Res<Time>,
-    projectile_assets: ResMut<ProjectileAssets>,
-){
+#[derive(Resource)]
+pub struct TowerDB {
+    defs: HashMap<&'static str, TowerDef>,
+}
 
-    for (transform, mut tower, tower_entity) in towers.iter_mut(){
-        tower.shooting_timer.tick(time.delta());
-        if tower.shooting_timer.just_finished(){
-            let bullet_spawn_position = transform.translation() + tower.projectile_offset;
+pub struct TowerDef {
+    pub damage: f32,
+    pub scene: Handle<Scene>,
+    pub projectile_scene: Handle<Scene>,
+    pub fire_interval: f32,
+    pub range: f32,
+    pub projectile_speed: f32,
+    pub projectile_scale: f32,
+    pub offset: Vec3,
+}
 
-            let direction = targets.iter().min_by_key(|tt|{
-                FloatOrd(Vec3::distance(tt.translation(), bullet_spawn_position))
-            }).map(|ct|{
-                let mut target_position = ct.translation();
-                target_position.y += 0.3;
-                return target_position - bullet_spawn_position
-            });
+impl FromWorld for TowerDB {
+    fn from_world(world: &mut World) -> Self {
+        let server = world.resource::<AssetServer>();
 
-            if let Some(direction) = direction{
+        let tower1 = TowerDef {
+            scene: server.load(GltfAssetLabel::Scene(0).from_asset("glb/tower_01.glb")),
+            projectile_scene: server.load(GltfAssetLabel::Scene(0).from_asset("glb/projectile_02.glb")),
+            fire_interval: 0.5,
+            range: 5.0,
+            damage: 10.0,
+            projectile_speed: 4.0,
+            projectile_scale: 0.4,
+            offset: Vec3::new(0.0, 1.0, 0.2),
+        };
 
-                let tower_forward = transform.rotation() * -Vec3::Z;
-                // Ensure vectors are properly normalized by normalizing twice
-                let normalized_tower_forward = tower_forward.normalize().normalize();
-                let normalized_direction = direction.normalize().normalize();
-                let rotation_to_target = Quat::from_rotation_arc(normalized_tower_forward, normalized_direction);
-                let rotation = rotation_to_target * transform.rotation();
-                
-                
-                commands.entity(tower_entity).with_children(|commands|{
-                    commands.spawn((
-                        SceneRoot(projectile_assets.scene.clone()),
-                        Transform::from_translation(tower.projectile_offset).with_rotation(rotation).with_scale(Vec3::splat(0.5)),
-                    )).insert(Projectile{
-                        speed: 2.0,
-                        direction,
-                        life_timer: Timer::from_seconds(2.0, TimerMode::Once)
-                    }).insert(Name::new("Projectile"));                    
-                });
-            }
-        }
+        let tower2 = TowerDef {
+            scene: server.load(GltfAssetLabel::Scene(0).from_asset("glb/tower_02.glb")),
+            projectile_scene: server.load(GltfAssetLabel::Scene(0).from_asset("glb/projectile_02.glb")),
+            fire_interval: 1.5,
+            damage: 15.0,
+            range: 7.5,
+            projectile_speed: 6.0,
+            projectile_scale: 1.0,
+            offset: Vec3::new(0.0, 0.8, 0.2),
+        };
+
+        let mut defs = HashMap::new();
+        defs.insert("basic", tower1);
+        defs.insert("sniper", tower2);
+        Self { defs }
     }
 }
 
-const GLF_TOWER_1: &str = "glb/tower_01.glb";
-const GLF_TOWER_2: &str = "glb/tower_02.glb";
+fn spawn_tower_of(
+    commands: &mut Commands,
+    def: &TowerDef,
+    pos: Vec3,
+    name: String,
+) {
+    commands.spawn(TowerBundle {
+        tower: Tower {
+            shooting_timer: Timer::from_seconds(def.fire_interval, TimerMode::Repeating),
+        },
+        stats: TowerStats {
+            damage: def.damage,
+            projectile_offset: def.offset,
+            range_sq: def.range * def.range,
+            projectile_speed: def.projectile_speed,
+            projectile_scale: def.projectile_scale,
+            projectile_scene: def.projectile_scene.clone(),
+        },
+        scene: SceneRoot(def.scene.clone()),
+        transform: Transform::from_translation(pos),
+        name: Name::new(name),
+    });
+}
 
-#[derive(Default, Resource)]
-struct TowerAssets{
-    scene_1: Handle<Scene>,
-    scene_2: Handle<Scene>,
+impl Plugin for TowerPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<Tower>()
+            .init_resource::<TowerDB>()
+            .add_systems(Startup, spawn_some_towers)
+            .add_systems(Update, spawn_projectiles.run_if(in_state(AppState::InGame)));
+    }
+}
+
+fn spawn_some_towers(mut commands: Commands, db: Res<TowerDB>) {
+    let basic = db.defs.get("basic").unwrap();
+    let sniper = db.defs.get("sniper").unwrap();
+    spawn_tower_of(&mut commands, basic, Vec3::new(0.0, 0.0, 0.0), "T_basic_0".to_string());
+    spawn_tower_of(&mut commands, sniper, Vec3::new(3.0, 0.0, 0.0), "T_sniper_0".to_string());
 }

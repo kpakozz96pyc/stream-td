@@ -10,7 +10,6 @@ pub struct ProjectilePlugin;
 impl Plugin for ProjectilePlugin {
     fn build(&self, app: &mut App){
         app.register_type::<Projectile>()
-            .insert_resource(ProjectileAssets::default())
             .add_event::<DeathEvent>()
             .add_systems(Startup, load_assets)
             .add_systems(Update, (
@@ -29,6 +28,7 @@ pub struct Projectile{
     pub speed: f32,
     pub direction: Vec3,
     pub life_timer: Timer,
+    pub damage: f32,
 }
 
 fn projectile_fly(mut projectiles: Query<(&mut Transform, &Projectile)>, time: Res<Time>){
@@ -106,19 +106,8 @@ fn projectile_despawn(mut commands: Commands,
 
 fn load_assets(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut projectile_assets: ResMut<ProjectileAssets>,
+    asset_server: Res<AssetServer>
     ){
-    projectile_assets.scene = asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLF_PROJECTILE));
-
     let death_sound = asset_server.load("ogg/death_01.ogg");
     commands.insert_resource(DeathSound(death_sound));
-
-}
-
-pub const GLF_PROJECTILE: &str = "glb/projectile_02.glb";
-
-#[derive(Default, Resource)]
-pub struct ProjectileAssets{
-    pub scene: Handle<Scene>,
 }

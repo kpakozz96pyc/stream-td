@@ -1,0 +1,26 @@
+{
+  "towers": [
+    {
+      "id": "basic",
+      "damage": 10.0,
+      "scene": "glb/tower_01.glb",
+      "projectile_scene": "glb/projectile_02.glb",
+      "fire_interval": 0.5,
+      "range": 5.0,
+      "projectile_speed": 4.0,
+      "projectile_scale": 0.4,
+      "offset": [0.0, 1.0, 0.2]
+    },
+    {
+      "id": "sniper",
+      "damage": 15.0,
+      "scene": "glb/tower_02.glb",
+      "projectile_scene": "glb/projectile_02.glb",
+      "fire_interval": 1.5,
+      "range": 7.5,
+      "projectile_speed": 6.0,
+      "projectile_scale": 1.0,
+      "offset": [0.0, 0.8, 0.2]
+    }
+  ]
+}
