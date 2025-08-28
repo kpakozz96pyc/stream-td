@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::AppState;
 use crate::blood::SpawnBlood;
 use crate::target::{Health, Target};
-use bevy::audio::{AudioSource, SpatialAudioSink};
+use bevy::audio::{AudioSource};
 
 pub struct ProjectilePlugin;
 

@@ -1,7 +1,6 @@
 use bevy::asset::Assets;
 use bevy::prelude::*;
 use bevy::scene::SceneInstanceReady;
-use bevy::tasks::futures_lite::StreamExt;
 use rand::{Rng};
 use crate::AppState;
 use crate::world::Game;
