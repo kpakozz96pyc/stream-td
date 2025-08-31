@@ -9,7 +9,9 @@
       "range": 5.0,
       "projectile_speed": 4.0,
       "projectile_scale": 0.4,
-      "offset": [0.0, 1.0, 0.2]
+      "offset": [0.0, 1.0, 0.2],
+      "shot_sound": "ogg/tower1_shot.ogg",
+      "shot_volume": 10.0
     },
     {
       "id": "sniper",
@@ -20,7 +22,9 @@
       "range": 7.5,
       "projectile_speed": 6.0,
       "projectile_scale": 1.0,
-      "offset": [0.0, 0.8, 0.2]
+      "offset": [0.0, 0.8, 0.2],
+      "shot_sound": "ogg/tower2_shot.ogg",
+      "shot_volume": 10.0
     }
   ]
 }

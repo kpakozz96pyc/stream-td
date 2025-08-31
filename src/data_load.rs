@@ -15,6 +15,8 @@ struct TowerDefJson {
     pub projectile_speed: f32,
     pub projectile_scale: f32,
     pub offset: [f32; 3],
+    pub shot_sound: String,
+    pub shot_volume: f32
 }
 
 #[derive(serde::Deserialize, Asset, TypePath, Clone)]
@@ -69,6 +71,7 @@ fn build_tower_db_once(
     for j in &file.towers {
         let scene: Handle<Scene>      = asset_server.load(format!("{}#Scene0", j.scene));
         let proj_scene: Handle<Scene> = asset_server.load(format!("{}#Scene0", j.projectile_scene));
+        let shot_sound: Handle<AudioSource> = asset_server.load(j.shot_sound.clone());
         defs.insert(j.id.clone(), TowerDef {
             id: j.id.clone(),
             damage: j.damage,
@@ -79,6 +82,8 @@ fn build_tower_db_once(
             projectile_speed: j.projectile_speed,
             projectile_scale: j.projectile_scale,
             offset: Vec3::from_array(j.offset),
+            shot_sound,
+            shot_volume: j.shot_volume
         });
     }
 

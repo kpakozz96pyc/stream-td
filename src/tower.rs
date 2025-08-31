@@ -4,6 +4,7 @@ use crate::target::Target;
 use bevy::math::{FloatOrd, Vec3};
 use bevy::prelude::*;
 use std::collections::HashMap;
+use bevy::audio::Volume;
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
@@ -30,6 +31,8 @@ pub struct TowerStats {
     pub projectile_speed: f32,
     pub projectile_scale: f32,
     pub projectile_scene: Handle<Scene>,
+    pub shot_sound: Handle<AudioSource>,
+    pub shot_volume: f32
 }
 
 #[derive(Bundle)]
@@ -56,6 +59,8 @@ pub struct TowerDef {
     pub projectile_speed: f32,
     pub projectile_scale: f32,
     pub offset: Vec3,
+    pub shot_sound: Handle<AudioSource>,
+    pub shot_volume: f32
 }
 // endregion
 
@@ -89,6 +94,8 @@ fn spawn_tower_of(commands: &mut Commands,
             projectile_speed: def.projectile_speed,
             projectile_scale: def.projectile_scale,
             projectile_scene: def.projectile_scene.clone(),
+            shot_sound: def.shot_sound.clone(),
+            shot_volume: def.shot_volume
         },
         scene: SceneRoot(def.scene.clone()),
         transform: Transform::from_translation(pos),
@@ -140,6 +147,15 @@ fn spawn_projectiles(
                     damage: stats.damage,
                 },
                 Name::new("Projectile"),
+            ));
+            commands.spawn((
+                Name::new("shot_sound"),
+                Transform::from_translation(muzzle),
+                GlobalTransform::default(),
+                AudioPlayer(stats.shot_sound.clone()),
+                PlaybackSettings::DESPAWN
+                    .with_spatial(true)
+                    .with_volume(Volume::Linear(stats.shot_volume))
             ));
         }
     }
