@@ -8,5 +8,6 @@ bevy={version = "0.16.1"}
 bevy-inspector-egui = "0.32.0"
 rand = "0.9.2"
 serde = { version = "1.0.219", features = ["derive"] }
+bevy_common_assets = { version = "0.13.0", features = ["json"] }
 anyhow = "1.0.99"
 serde_json = "1.0.142"

@@ -6,6 +6,7 @@ mod camera;
 mod pixel_plugin;
 mod blood;
 mod main_menu;
+mod data_load;
 
 use bevy::app::App;
 use bevy::prelude::*;
@@ -20,17 +21,22 @@ use crate::tower::TowerPlugin;
 use crate::world::WorldPlugin;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use crate::blood::BloodPlugin;
+use crate::data_load::DataLoadPlugin;
 use crate::main_menu::MainMenuPlugin;
 use crate::pixel_plugin::PixelPlugin;
+use crate::StartupStage::{Build, Load, Processing};
 
 fn main() {
     App::new()
+        .configure_sets(Startup, (Load, Processing, Build).chain())
+        .configure_sets(Update, (Load, Processing, Build).chain())
         .insert_resource(ClearColor(Color::Srgba(Srgba::new(0.3,0.3,0.3, 1.0))))
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(LogDiagnosticsPlugin::default())
+        .add_plugins(DataLoadPlugin)
         .add_plugins(TowerPlugin)
         .add_plugins(TargetPlugin)
         .add_plugins(WorldPlugin)
@@ -49,6 +55,13 @@ pub enum AppState {
     Menu,
     InGame,
     Paused,
+}
+
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub enum StartupStage {
+    Load,
+    Processing,
+    Build,
 }
 
 

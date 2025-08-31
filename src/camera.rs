@@ -76,7 +76,7 @@ fn camera_zoom(
     time: Res<Time>,
 ) {
     let mut camera_transform = camera_query.single_mut().unwrap();
-    let zoom_speed = 10.0;
+    let zoom_speed = 30.0;
     let delta = time.delta_secs();
 
     for event in mouse_wheel_events.read() {
