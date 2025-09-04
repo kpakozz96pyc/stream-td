@@ -15,17 +15,15 @@ impl Plugin for TowerPlugin {
             .add_systems(Update, spawn_some_towers.run_if(resource_added::<TowerDB>))
             .add_systems(Update, spawn_projectiles.run_if(in_state(AppState::InGame)))
             .init_resource::<SelectedTower>()
-            .init_resource::<SelectedTower>()
+            .init_resource::<TowerClickFlag>()
             .add_systems(Startup, setup_selection_materials)
             .add_systems(Update, apply_tower_selection.run_if(resource_changed::<SelectedTower>))
             .add_systems(
                 Update,
                 ui_selected_tower_panel
-                    .run_if(in_state(AppState::InGame))
-                    .run_if(tower_selected),
-        );
-
-
+                    .run_if(tower_selected))
+            .add_systems(PreUpdate, reset_tower_click_flag)
+            .add_systems(PostUpdate, deselect_on_empty_click.run_if(in_state(AppState::InGame)));
     }
 }
 
@@ -81,26 +79,23 @@ pub struct TowerDef {
 // endregion
 
 // region systems
-fn spawn_some_towers(mut commands: Commands, db: Res<TowerDB>, mut materials: ResMut<Assets<StandardMaterial>>) {
+fn spawn_some_towers(mut commands: Commands, db: Res<TowerDB>) {
     let basic = db.defs.get("basic").unwrap();
     let sniper = db.defs.get("sniper").unwrap();
 
     spawn_tower_of(
         &mut commands,
-        &mut materials,
         basic,
         Vec3::new(0.0, 0.0, 0.0),
     );
     spawn_tower_of(
         &mut commands,
-        &mut materials,
         sniper,
         Vec3::new(3.0, 0.0, 0.0),
     );
 }
 
 fn spawn_tower_of(commands: &mut Commands,
-                  materials: &mut Assets<StandardMaterial>,
                   def: &TowerDef,
                   pos: Vec3) {
 
@@ -214,7 +209,7 @@ fn on_tower_click(
     trigger: Trigger<Pointer<Click>>,
     roots: Query<&TowerRoot>,
     names: Query<&Name>,
-    mut selected: ResMut<SelectedTower>,
+    mut selected: ResMut<SelectedTower>
 ) {
     if let Ok(root) = roots.get(trigger.target()) {
         if selected.0 == Some(root.0) {
@@ -291,18 +286,16 @@ fn ui_selected_tower_panel(
     selected: Res<SelectedTower>,
     stats_q: Query<(&TowerStats, Option<&Name>)>,
 ) {
-    // Можно оставить подстраховку, но run_if уже гарантирует наличие выбранной башни
     let Some(entity) = selected.0 else { return; };
 
     let ctx = egui_ctx.ctx_mut().unwrap();
 
     egui::Area::new(egui::Id::new("tower_info_area"))
         .anchor(egui::Align2::RIGHT_BOTTOM, [-12.0, -12.0])
-        .interactable(false)
         .show(ctx, |ui| {
             let frame = egui::Frame::window(&ctx.style())
                 .fill(ui.visuals().panel_fill)
-                .rounding(egui::Rounding::same(6))
+                .corner_radius(egui::CornerRadius::same(6))
                 .inner_margin(egui::Margin::symmetric(10, 8))
                 .stroke(ui.visuals().widgets.noninteractive.bg_stroke);
 
@@ -314,11 +307,11 @@ fn ui_selected_tower_panel(
                     if let Some(name) = name {
                         ui.label(format!("ID: {}", name.as_str()));
                     }
-                    ui.label(format!("Урон: {:.1}", stats.damage));
-                    ui.label(format!("Дальность: {:.1}", stats.range_sq.sqrt()));
-                    ui.label(format!("Скорость снаряда: {:.1}", stats.projectile_speed));
-                    ui.label(format!("Размер снаряда: {:.2}", stats.projectile_scale));
-                    ui.label(format!("Громкость выстрела: {:.1}", stats.shot_volume));
+                    ui.label(format!("Damage: {:.1}", stats.damage));
+                    ui.label(format!("Range: {:.1}", stats.range_sq.sqrt()));
+                    ui.label(format!("Projectile speed: {:.1}", stats.projectile_speed));
+                    ui.label(format!("Proj size: {:.2}", stats.projectile_scale));
+                    ui.label(format!("Volume: {:.1}", stats.shot_volume));
                 } else {
                     ui.label("Нет данных по выбранной башне");
                 }
@@ -326,9 +319,40 @@ fn ui_selected_tower_panel(
         });
 }
 
+#[derive(Resource, Default)]
+struct TowerClickFlag(bool);
+
+fn reset_tower_click_flag(mut flag: ResMut<TowerClickFlag>) {
+    flag.0 = false;
+}
+
+
+fn deselect_on_empty_click(
+    mouse: Res<ButtonInput<MouseButton>>,
+    mut egui_ctx: bevy_egui::EguiContexts,
+    mut selected: ResMut<SelectedTower>,
+    flag: Res<TowerClickFlag>,
+) {
+    if !mouse.just_pressed(MouseButton::Left) {
+        return;
+    }
+
+    if flag.0 {
+        return;
+    }
+
+    let ctx_result = egui_ctx.ctx_mut();
+    if ctx_result.is_err() { return; }
+    if ctx_result.unwrap().wants_pointer_input() {
+        return;
+    }
 
 
 
-
+    if selected.0.is_some() {
+        info!("Tower deselected by empty click");
+        selected.0 = None;
+    }
+}
 
 // endregion

@@ -139,8 +139,13 @@ fn keyboard_input(
     current_state: Res<State<AppState>>,
 ) {
     if keyboard.just_pressed(KeyCode::Escape) {
-        menu_state.set(AppState::Menu);
+        if *current_state.get() != AppState::Menu {
+            menu_state.set(AppState::Menu);
+        } else {
+            menu_state.set(AppState::InGame);
+        }
     }
+    
     if keyboard.just_pressed(KeyCode::Space) {
         if *current_state.get() != AppState::Paused {
             menu_state.set(AppState::Paused);

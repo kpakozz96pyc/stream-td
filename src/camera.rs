@@ -2,14 +2,16 @@ use crate::pixel_plugin::PostProcessSettings;
 use bevy::app::{App, Startup};
 use bevy::input::mouse::{MouseButton, MouseMotion, MouseWheel};
 use bevy::math::{Quat, Vec3};
-use bevy::prelude::{ButtonInput, Camera3d, Commands, EventReader, GlobalTransform, KeyCode, Query, Res, SpatialListener, Time, Transform, Update, With};
+use bevy::prelude::{in_state, not, ButtonInput, Camera3d, Commands, EventReader, GlobalTransform, IntoScheduleConfigs, KeyCode, Query, Res, SpatialListener, Time, Transform, Update, With};
+use crate::AppState;
 
 pub struct CustomCameraPlugin;
 
 impl bevy::prelude::Plugin for CustomCameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_camera)
-            .add_systems(Update, (camera_controls, camera_zoom, camera_rotate));
+            .add_systems(Update, (camera_controls, camera_zoom, camera_rotate)
+                .run_if(not(in_state(AppState::Menu))));
     }
 }
 
