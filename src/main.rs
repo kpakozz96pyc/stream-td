@@ -22,7 +22,7 @@ use crate::projectile::ProjectilePlugin;
 use crate::target::TargetPlugin;
 use crate::tower::TowerPlugin;
 use crate::world::WorldPlugin;
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+use bevy::diagnostic::{LogDiagnosticsPlugin};
 use crate::blood::BloodPlugin;
 use crate::data_load::DataLoadPlugin;
 use crate::egui_setup::EguiConfigurePlugin;
@@ -31,6 +31,7 @@ use crate::main_menu::MainMenuPlugin;
 use crate::pixel_plugin::PixelPlugin;
 use crate::StartupStage::{Build, Load, Processing};
 use crate::tower_build::TowerBuildPlugin;
+//use bevy::diagnostic::{FrameTimeDiagnosticsPlugin};
 
 fn main() {
     App::new()
@@ -41,7 +42,7 @@ fn main() {
         .add_plugins(MeshPickingPlugin)
         .add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new())
-        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        //.add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(DataLoadPlugin)
         .add_plugins(TowerPlugin)
@@ -49,7 +50,7 @@ fn main() {
         .add_plugins(WorldPlugin)
         .add_plugins(ProjectilePlugin)
         .add_plugins(CustomCameraPlugin)
-        .add_plugins(PixelPlugin)
+        //.add_plugins(PixelPlugin)
         .add_plugins(BloodPlugin)
         .add_plugins(MainMenuPlugin)
         .add_plugins(EguiConfigurePlugin)

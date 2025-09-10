@@ -51,7 +51,7 @@ fn spawn_targets(
             Target,
             TargetKind(kind),
             Speed(0.3),
-            Health(100.0),
+            Health(300.0),
             SceneRoot(entry.scene.clone()),
             Transform::from_xyz(-2.0, 0.0, 2.0)
                 .with_scale(Vec3::splat(entry.spawn_scale))

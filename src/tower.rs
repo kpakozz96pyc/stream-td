@@ -63,6 +63,10 @@ pub struct TowerDB {
     pub defs: HashMap<String, TowerDef>,
 }
 
+
+pub struct TowerDefComponent;
+
+#[derive(Clone)]
 pub struct TowerDef {
     pub id: String,
     pub damage: f32,
@@ -79,7 +83,7 @@ pub struct TowerDef {
 // endregion
 
 // region systems
-fn spawn_some_towers(mut commands: Commands, db: Res<TowerDB>) {
+pub fn spawn_some_towers(mut commands: Commands, db: Res<TowerDB>) {
     let basic = db.defs.get("basic").unwrap();
     let sniper = db.defs.get("sniper").unwrap();
 
@@ -95,7 +99,7 @@ fn spawn_some_towers(mut commands: Commands, db: Res<TowerDB>) {
     );
 }
 
-fn spawn_tower_of(commands: &mut Commands,
+pub fn spawn_tower_of(commands: &mut Commands,
                   def: &TowerDef,
                   pos: Vec3) {
 

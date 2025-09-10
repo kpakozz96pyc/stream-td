@@ -1,7 +1,6 @@
 use bevy::app::{App, Plugin, Startup};
 use bevy::asset::Assets;
 use bevy::color::{Color, Srgba};
-
 use bevy::pbr::{MeshMaterial3d, PointLight, StandardMaterial};
 use bevy::prelude::*;
 
@@ -38,5 +37,5 @@ fn spawn_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut mat
         MeshMaterial3d(materials.add(Color::from(Srgba::new(0.3, 0.5, 0.3, 1.0)))),
     ))
         .insert(Name::new("Scene"))
-        .insert(Game {target_spawn_timer: Timer::from_seconds(3.0, TimerMode::Repeating)});
+        .insert(Game {target_spawn_timer: Timer::from_seconds(2.0, TimerMode::Repeating)});
 }
