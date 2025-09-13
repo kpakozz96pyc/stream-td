@@ -10,6 +10,8 @@ mod data_load;
 mod egui_setup;
 mod input_system;
 mod tower_build;
+mod pixel_camera;
+mod camera_controls;
 
 use bevy::app::App;
 use bevy::prelude::*;
@@ -24,6 +26,7 @@ use crate::tower::TowerPlugin;
 use crate::world::WorldPlugin;
 use bevy::diagnostic::{LogDiagnosticsPlugin};
 use crate::blood::BloodPlugin;
+use crate::camera_controls::CameraControlsPlugin;
 use crate::data_load::DataLoadPlugin;
 use crate::egui_setup::EguiConfigurePlugin;
 use crate::input_system::PlayerInputPlugin;
@@ -31,17 +34,18 @@ use crate::main_menu::MainMenuPlugin;
 use crate::pixel_plugin::PixelPlugin;
 use crate::StartupStage::{Build, Load, Processing};
 use crate::tower_build::TowerBuildPlugin;
-//use bevy::diagnostic::{FrameTimeDiagnosticsPlugin};
+use crate::pixel_camera::PixelCameraPlugin;
 
 fn main() {
     App::new()
         .configure_sets(Startup, (Load, Processing, Build).chain())
         .configure_sets(Update, (Load, Processing, Build).chain())
         .insert_resource(ClearColor(Color::Srgba(Srgba::new(0.3,0.3,0.3, 1.0))))
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(MeshPickingPlugin)
         .add_plugins(EguiPlugin::default())
-        .add_plugins(WorldInspectorPlugin::new())
+        //.add_plugins(PixelPlugin)
+        //.add_plugins(WorldInspectorPlugin::new())
         //.add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(DataLoadPlugin)
@@ -49,8 +53,9 @@ fn main() {
         .add_plugins(TargetPlugin)
         .add_plugins(WorldPlugin)
         .add_plugins(ProjectilePlugin)
-        .add_plugins(CustomCameraPlugin)
-        //.add_plugins(PixelPlugin)
+        //.add_plugins(CustomCameraPlugin)
+        .add_plugins(CameraControlsPlugin)
+        .add_plugins(PixelCameraPlugin)
         .add_plugins(BloodPlugin)
         .add_plugins(MainMenuPlugin)
         .add_plugins(EguiConfigurePlugin)
