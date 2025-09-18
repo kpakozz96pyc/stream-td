@@ -11,3 +11,4 @@ serde = { version = "1.0.219", features = ["derive"] }
 bevy_common_assets = { version = "0.13.0", features = ["json"] }
 anyhow = "1.0.99"
 serde_json = "1.0.142"
+bytemuck = "1.23.1"

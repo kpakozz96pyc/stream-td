@@ -6,8 +6,11 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 use bevy::audio::Volume;
 use bevy::color::palettes::css::YELLOW;
+use bevy::render::view::RenderLayers;
 use bevy::scene::SceneInstanceReady;
+use bevy::window::PrimaryWindow;
 use bevy_inspector_egui::{bevy_egui, egui};
+use bevy_inspector_egui::bevy_egui::{EguiContexts, EguiPrimaryContextPass};
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
@@ -19,7 +22,7 @@ impl Plugin for TowerPlugin {
             .add_systems(Startup, setup_selection_materials)
             .add_systems(Update, apply_tower_selection.run_if(resource_changed::<SelectedTower>))
             .add_systems(
-                Update,
+                EguiPrimaryContextPass,
                 ui_selected_tower_panel
                     .run_if(tower_selected))
             .add_systems(PreUpdate, reset_tower_click_flag)
@@ -55,16 +58,13 @@ pub struct TowerBundle {
     pub scene: SceneRoot,
     pub transform: Transform,
     pub name: Name,
-    pub pickable: Pickable
+    pub pickable: Pickable,
 }
 
 #[derive(Resource)]
 pub struct TowerDB {
     pub defs: HashMap<String, TowerDef>,
 }
-
-
-pub struct TowerDefComponent;
 
 #[derive(Clone)]
 pub struct TowerDef {
@@ -121,7 +121,8 @@ pub fn spawn_tower_of(commands: &mut Commands,
         transform: Transform::from_translation(pos),
         name: Name::new(def.id.clone()),
         pickable: Pickable::default(),
-    }).observe(attach_tower_clickables);
+    },
+    ).observe(attach_tower_clickables);
 }
 
 fn spawn_projectiles(
@@ -215,6 +216,7 @@ fn on_tower_click(
     names: Query<&Name>,
     mut selected: ResMut<SelectedTower>
 ) {
+    info!("on_tower_click called");
     if let Ok(root) = roots.get(trigger.target()) {
         if selected.0 == Some(root.0) {
             selected.0 = None;
@@ -263,8 +265,6 @@ fn apply_tower_selection(
     }
 }
 
-
-
 #[derive(Component, Clone)]
 struct MeshOriginalMaterial(Handle<StandardMaterial>);
 
@@ -292,7 +292,8 @@ fn ui_selected_tower_panel(
 ) {
     let Some(entity) = selected.0 else { return; };
 
-    let ctx = egui_ctx.ctx_mut().unwrap();
+    // безопасно: вернёт None, если egui ещё не инициализировался
+    let ctx = egui_ctx.ctx_mut().expect("EguiContext not initialized");
 
     egui::Area::new(egui::Id::new("tower_info_area"))
         .anchor(egui::Align2::RIGHT_BOTTOM, [-12.0, -12.0])
@@ -308,9 +309,7 @@ fn ui_selected_tower_panel(
                 ui.separator();
 
                 if let Ok((stats, name)) = stats_q.get(entity) {
-                    if let Some(name) = name {
-                        ui.label(format!("ID: {}", name.as_str()));
-                    }
+                    if let Some(name) = name { ui.label(format!("ID: {}", name.as_str())); }
                     ui.label(format!("Damage: {:.1}", stats.damage));
                     ui.label(format!("Range: {:.1}", stats.range_sq.sqrt()));
                     ui.label(format!("Projectile speed: {:.1}", stats.projectile_speed));

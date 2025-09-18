@@ -60,7 +60,7 @@ fn main() {
         .add_plugins(MainMenuPlugin)
         .add_plugins(EguiConfigurePlugin)
         .add_plugins(PlayerInputPlugin)
-        .add_plugins(TowerBuildPlugin)
+        //.add_plugins(TowerBuildPlugin)
         .init_state::<AppState>()
         .init_state::<PlayerState>()
         .run();

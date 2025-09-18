@@ -1,5 +1,5 @@
 use crate::PlayerState;
-use crate::tower::{TowerDB, TowerDef, spawn_tower_of, Tower, TowerStats, TowerBundle};
+use crate::tower::{TowerDB, TowerDef, spawn_tower_of};
 use bevy::diagnostic::FrameCount;
 use bevy::pbr::{NotShadowCaster, NotShadowReceiver};
 use bevy::prelude::*;
@@ -34,7 +34,7 @@ impl Plugin for TowerBuildPlugin {
                     .run_if(tower_to_build_selected_need_to_be_tinted)
                     .run_if(in_state(PlayerState::Build)),
                 place_selected_tower_on_click.run_if(in_state(PlayerState::Build)),
-            ));;
+            ));
     }
 }
 
@@ -190,7 +190,7 @@ fn place_selected_tower_on_click(
         return;
     }
 
-    let Ok(window) = windows.get_single() else {
+    let Ok(window) = windows.single() else {
         return;
     };
     let Some(cursor_pos) = window.cursor_position() else {
